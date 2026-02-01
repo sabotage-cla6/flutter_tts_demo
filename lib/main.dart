@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:developer' as developer;
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter-TTS Demo',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -30,7 +33,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Flutter-TTS Demo Home Page'),
     );
   }
 }
@@ -56,6 +59,31 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  TextEditingController? speechRateFieldController = TextEditingController();
+  TextEditingController? speechPitchFieldController = TextEditingController();
+
+  String _voiceName = "Microsoft Ayumi";
+  FlutterTts tts = FlutterTts();
+  List<Map<String, String>> voices = [
+    {"name": "Microsoft Ayumi", "locale": "ja-JP"},
+    {"name": "Microsoft Haruka", "locale": "ja-JP"},
+    {"name": "Microsoft Ichiro", "locale": "ja-JP"},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _init_tts();
+  }
+
+  void _init_tts() async {
+    // await tts.setLanguage('ja-JP');
+    // await tts.setSpeechRate(0.6);
+    // await tts.setPitch(1.0);
+    await tts.awaitSpeakCompletion(false); // 発話の完了まで待機。
+    await tts.setVoice({"name": "Microsoft Ayumi", "locale": "ja-JP"});
+  }
+
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -63,8 +91,24 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      _counter = (++_counter % voices.length);
+      _voiceName = voices[_counter]["name"]!;
     });
+    tts.setVoice(voices[_counter]);
+    Future<Set<dynamic>> stop() async => {await tts.stop()};
+    stop();
+    speak();
+  }
+
+  void speak() async {
+    await tts.speak('''
+サブチャンネル MJで麻雀入門
+MJで麻雀入門のチャンネルでは麻雀初心者向けに
+麻雀のルール
+打ちかたの基本
+などを解説しています。
+まだはじめたばかりのチャンネルですが、よろしくおねがいします。
+''');
   }
 
   @override
@@ -104,11 +148,52 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            ListView(
+              shrinkWrap: true, // 追加
+              children: [
+                Wrap(
+                  children: [
+                    Container(
+                      width: 200,
+                      margin: EdgeInsets.all(10),
+                      child: DropdownButton(
+                        items: const [
+                          DropdownMenuItem(child: Text('Microsoft Ayumi'), value: 'Microsoft Ayumi'),
+                          DropdownMenuItem(child: Text('Microsoft Haruka'), value: 'Microsoft Haruka'),
+                          DropdownMenuItem(child: Text('Microsoft Ichiro'), value: 'Microsoft Ichiro'),
+                        ],
+                        onChanged: (String? value) {
+                          setState(() {});
+                        },
+                        value: _voiceName,
+                      ),
+                    ),
+                    Container(
+                      width: 200,
+                      margin: EdgeInsets.all(10),
+                      child: TextField(
+                        decoration: InputDecoration(labelText: "声の高さ"),
+                        controller: speechRateFieldController,
+                      ),
+                    ),
+                    Container(
+                      width: 200,
+                      margin: EdgeInsets.all(10),
+                      child: TextField(
+                        decoration: InputDecoration(labelText: "声の速度"),
+                        controller: speechPitchFieldController,
+                      ),
+                    ),
+                  ],
+                ),
+                Text('$_voiceName'),
+                Text(
+                  '$_counter',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ],
             ),
+            //
           ],
         ),
       ),
