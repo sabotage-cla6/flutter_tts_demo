@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'dart:developer' as developer;
 
 void main() {
   runApp(const MyApp());
@@ -57,18 +55,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  TextEditingController? speechRateFieldController = TextEditingController();
-  TextEditingController? speechPitchFieldController = TextEditingController();
+  TextEditingController speechRateFieldController = TextEditingController(text: "1.0");
+  TextEditingController speechPitchFieldController = TextEditingController(text: "1.0");
 
   String _voiceName = "Microsoft Ayumi";
   FlutterTts tts = FlutterTts();
-  List<Map<String, String>> voices = [
-    {"name": "Microsoft Ayumi", "locale": "ja-JP"},
-    {"name": "Microsoft Haruka", "locale": "ja-JP"},
-    {"name": "Microsoft Ichiro", "locale": "ja-JP"},
-  ];
+  Map<String,Map<String, String>> voices = {
+    "Microsoft Ayumi": {"name": "Microsoft Ayumi", "locale": "ja-JP"},
+    "Microsoft Haruka": {"name": "Microsoft Haruka", "locale": "ja-JP"},
+    "Microsoft Ichiro": {"name": "Microsoft Ichiro", "locale": "ja-JP"},
+  };
 
   @override
   void initState() {
@@ -91,16 +87,16 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter = (++_counter % voices.length);
-      _voiceName = voices[_counter]["name"]!;
     });
-    tts.setVoice(voices[_counter]);
     Future<Set<dynamic>> stop() async => {await tts.stop()};
     stop();
     speak();
   }
 
   void speak() async {
+    tts.setVoice(voices[_voiceName]!);
+    tts.setSpeechRate(double.parse(speechRateFieldController.text));
+    tts.setPitch(double.parse(speechPitchFieldController.text));
     await tts.speak('''
 サブチャンネル MJで麻雀入門
 MJで麻雀入門のチャンネルでは麻雀初心者向けに
@@ -152,18 +148,30 @@ MJで麻雀入門のチャンネルでは麻雀初心者向けに
               shrinkWrap: true, // 追加
               children: [
                 Wrap(
+                  alignment: WrapAlignment.center,
                   children: [
                     Container(
                       width: 200,
                       margin: EdgeInsets.all(10),
                       child: DropdownButton(
                         items: const [
-                          DropdownMenuItem(child: Text('Microsoft Ayumi'), value: 'Microsoft Ayumi'),
-                          DropdownMenuItem(child: Text('Microsoft Haruka'), value: 'Microsoft Haruka'),
-                          DropdownMenuItem(child: Text('Microsoft Ichiro'), value: 'Microsoft Ichiro'),
+                          DropdownMenuItem(
+                            child: Text('Microsoft Ayumi'),
+                            value: 'Microsoft Ayumi',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('Microsoft Haruka'),
+                            value: 'Microsoft Haruka',
+                          ),
+                          DropdownMenuItem(
+                            child: Text('Microsoft Ichiro'),
+                            value: 'Microsoft Ichiro',
+                          ),
                         ],
                         onChanged: (String? value) {
-                          setState(() {});
+                          setState(() {
+                            _voiceName = value!; 
+                          });
                         },
                         value: _voiceName,
                       ),
@@ -172,7 +180,7 @@ MJで麻雀入門のチャンネルでは麻雀初心者向けに
                       width: 200,
                       margin: EdgeInsets.all(10),
                       child: TextField(
-                        decoration: InputDecoration(labelText: "声の高さ"),
+                        decoration: InputDecoration(labelText: "声の速度"),
                         controller: speechRateFieldController,
                       ),
                     ),
@@ -180,16 +188,21 @@ MJで麻雀入門のチャンネルでは麻雀初心者向けに
                       width: 200,
                       margin: EdgeInsets.all(10),
                       child: TextField(
-                        decoration: InputDecoration(labelText: "声の速度"),
+                        decoration: InputDecoration(labelText: "声の高さ"),
                         controller: speechPitchFieldController,
                       ),
                     ),
                   ],
                 ),
-                Text('$_voiceName'),
-                Text(
-                  '$_counter',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Column(children: [
+                      Text('声の名前：$_voiceName'),
+                      Text('声の高さ：${speechRateFieldController.text}'),
+                      Text('声の速度：${speechPitchFieldController.text}')
+                      ]),
+                  ],
                 ),
               ],
             ),
@@ -200,7 +213,7 @@ MJで麻雀入門のチャンネルでは麻雀初心者向けに
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.play_arrow),
       ),
     );
   }
